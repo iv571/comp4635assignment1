@@ -77,11 +77,25 @@ public class GameServer {
 					
 					if (inputLine.equals("1")) {
 						out.println("Level 1 selected");
+						out.println();
+					} else if (inputLine.equals("2")) {
+						out.println("Level 2 selected");
+						out.println();
+					} else if (inputLine.equals("3")) {
+						out.println("Level 3 selected");
+						out.println();
+					} else if (inputLine.equals("4")) {
+						out.println("Level 4 selected");
+						out.println();
+					} else if (inputLine.equals("5")) {
+						out.println("Level 5 selected");
+						out.println();
+					} else {
+						out.print("Connected to the game server \n");
+						out.print("Select a game level to play (1-5): \n");
+						out.println();
 					}
 					
-					out.print("Connected to the game server \n");
-					out.print("Select a game level to play (1-5): \n");
-					out.println();
 				}
 			} catch (SocketException e) {
 				System.out.println("Error: " + e.getMessage());
