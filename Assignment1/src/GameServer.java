@@ -10,6 +10,9 @@ import java.util.concurrent.Executors;
 import java.net.*;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Random;
 import java.util.Scanner;
 
 import java.io.*;
@@ -45,6 +48,28 @@ public class GameServer {
 		}
 	}
 	
+	private static String getRandomWordFromFile(int minLength) {
+		List<String> words = new ArrayList<>();
+        try (BufferedReader br = new BufferedReader(new FileReader("words.txt"))) {
+            String line;
+            while ((line = br.readLine()) != null) {
+                line = line.trim();
+                // Skip empty lines and lines that do not meet the minimum length.
+                if (!line.isEmpty() && line.length() >= minLength) {
+                    words.add(line);
+                }
+            }
+        } catch (IOException e) {
+            System.err.println("Error reading words.txt: " + e.getMessage());
+        }
+        if (words.isEmpty()) {
+            return "";
+        }
+        Random rand = new Random();
+        System.out.println(rand.nextInt(words.size()));
+        return words.get(rand.nextInt(words.size()));
+	  }
+	
 	private static class ReverseEchoClientHandler implements Runnable {
 		private Socket clientSocket;
 
@@ -77,6 +102,7 @@ public class GameServer {
 					
 					if (inputLine.equals("1")) {
 						out.println("Level 1 selected");
+						out.println(getRandomWordFromFile(2));
 						out.println();
 					} else if (inputLine.equals("2")) {
 						out.println("Level 2 selected");
