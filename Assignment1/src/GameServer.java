@@ -129,7 +129,7 @@ public class GameServer {
 	
 	/**
      * Counts the total number of characters in the puzzle that are not the empty placeholder ('.').
-     *
+     * Author: Iyan Velji
      * @param puzzle The puzzle grid.
      * @return The count of filled letters.
      */
@@ -151,6 +151,7 @@ public class GameServer {
      *
      * Each row is terminated with a '+' character and a newline, emulating the provided format.
      *
+     * Author: Iyan Velji
      * @param puzzle The puzzle grid.
      * @return A string representing the formatted puzzle.
      */
@@ -158,12 +159,54 @@ public class GameServer {
         StringBuilder sb = new StringBuilder();
         for (int i = 0; i < puzzle.length; i++) {
             for (int j = 0; j < puzzle[i].length; j++) {
-                sb.append(puzzle[i][j]);
+            	char c = puzzle[i][j];
+//                sb.append(puzzle[i][j]);
+                sb.append(c == '.' ? '.' : '_');
             }
             sb.append("+\n"); // Denote end of row with a '+' followed by a newline.
         }
         return sb.toString();
     }
+    
+    private static String formatPuzzleWithRevealed(char[][] solution, boolean[][] revealed) {
+        StringBuilder sb = new StringBuilder();
+        for (int i = 0; i < solution.length; i++) {
+            for (int j = 0; j < solution[i].length; j++) {
+                if (solution[i][j] == '.') {
+                    // Always show the placeholder.
+                    sb.append('.');
+                } else {
+                    // Show the letter if it has been revealed; otherwise, underscore.
+                    sb.append(revealed[i][j] ? solution[i][j] : '_');
+                }
+            }
+            sb.append("+\n");
+        }
+        return sb.toString();
+    }
+    
+    /**
+     * Formats the puzzle grid into a string.
+     *
+     * Each row is terminated with a '+' character and a newline, emulating the provided format.
+     *
+     * Author: Iyan Velji
+     * @param puzzle The puzzle grid.
+     * @return A string representing the formatted puzzle.
+     */
+    private static String revealPuzzle(char[][] puzzle) {
+        StringBuilder sb = new StringBuilder();
+        for (int i = 0; i < puzzle.length; i++) {
+            for (int j = 0; j < puzzle[i].length; j++) {
+            	char c = puzzle[i][j];
+//                sb.append(puzzle[i][j]);
+                sb.append(c);
+            }
+            sb.append("+\n"); // Denote end of row with a '+' followed by a newline.
+        }
+        return sb.toString();
+    }
+
 
 	
 	private static class ReverseEchoClientHandler implements Runnable {
@@ -218,11 +261,41 @@ public class GameServer {
 //				        int allowedAttempts = letterCount * f;
 				        
 				        String formattedPuzzle = formatPuzzle(puzzle);
+				        String revealedPuzzle = revealPuzzle(puzzle);
 				        
-				        out.println(formattedPuzzle);
+				        System.out.println(revealedPuzzle);
 				        
-						out.println(getRandomWordFromFile(2));
-						out.println();
+				        while (true) {
+				        	out.println(formattedPuzzle);
+							String guess = in.nextLine().trim();
+					        if (guess.isEmpty()) {
+					            continue;
+					        } else if (guess.length() == 1) {
+					        	
+					        	// Process a single letter guess.
+					            char guessedLetter = guess.charAt(0);
+					            boolean found = false;
+					            
+					            out.println("Guessed letter: " + guessedLetter);
+					            // Loop over the solution grid (the "revealedPuzzle") to search for all instances.
+//					            for (int x = 0; x < revealedPuzzle.length(); x++) {
+//					                for (int j = 0; j < revealedPuzzle.length(); j++) {
+//					                	
+//					                    // If the cell contains the guessed letter and it hasn't already been revealed...
+//					                    if (puzzle[i][j] == guessedLetter && !revealedPuzzle[i][j]) {
+//					                    	puzzle[i][j] = true;
+//					                        found = true;
+//					                    }
+//					                }
+//					            }
+//					            if (found) {
+//					                out.println("Correct letter: " + guessedLetter);
+//					            } else {
+//					                out.println("Sorry, letter '" + guessedLetter + "' is not in the puzzle (or already revealed).");
+//					            }
+					        }
+				        }
+				        
 					} else if (inputLine.equals("2")) {
 						out.println("Level 2 selected");
 						out.println();
