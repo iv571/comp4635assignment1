@@ -278,21 +278,26 @@ public class GameServer {
 					            
 					            out.println("Guessed letter: " + guessedLetter);
 					            // Loop over the solution grid (the "revealedPuzzle") to search for all instances.
-//					            for (int x = 0; x < revealedPuzzle.length(); x++) {
-//					                for (int j = 0; j < revealedPuzzle.length(); j++) {
-//					                	
-//					                    // If the cell contains the guessed letter and it hasn't already been revealed...
-//					                    if (puzzle[i][j] == guessedLetter && !revealedPuzzle[i][j]) {
+					            for (int x = 0; x < revealedPuzzle.length(); x++) {
+					               
+					                	
+					                    // If the cell contains the guessed letter and it hasn't already been revealed...
+					                    if (revealedPuzzle.charAt(x) == guessedLetter && formattedPuzzle.charAt(x) == '_') {
 //					                    	puzzle[i][j] = true;
-//					                        found = true;
-//					                    }
-//					                }
-//					            }
-//					            if (found) {
-//					                out.println("Correct letter: " + guessedLetter);
-//					            } else {
-//					                out.println("Sorry, letter '" + guessedLetter + "' is not in the puzzle (or already revealed).");
-//					            }
+					                        found = true;
+					                        char [] formattedPuzzleChar = formattedPuzzle.toCharArray();
+					                        formattedPuzzleChar[x] = guessedLetter;
+					                        formattedPuzzle = String.valueOf(formattedPuzzleChar);
+					                        System.out.println(guessedLetter + " found");
+					                    }
+					             
+					                
+					            }
+					            if (found) {
+					                out.println("Correct letter: " + guessedLetter);
+					            } else {
+					                out.println("Sorry, letter '" + guessedLetter + "' is not in the puzzle (or already revealed).");
+					            }
 					        }
 				        }
 				        
