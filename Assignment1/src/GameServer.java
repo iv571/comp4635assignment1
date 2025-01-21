@@ -99,7 +99,7 @@ public class GameServer {
 	private static char[][] constructPuzzle(String verticalStem, String[] horizontalWords) {
         // Determine puzzle dimensions.
         int numRows = verticalStem.length();
-        int numCols = 10;
+        int numCols = 18;
         char[][] grid = new char[numRows][numCols];
 
         // Initialize the grid with '.' to denote empty spaces.
@@ -239,12 +239,23 @@ public class GameServer {
 					String inputLine = in.nextLine();
 					System.out.println("Received the following message from" + clientSocket + ":" + inputLine);
 					
-					int i;
 					
-					if (inputLine.equals("1")) {
-						out.println("Level 1 selected");
+					
+					
+					
+					if (inputLine.matches("start\\s+\\d+\\s+\\d+")) {
 						
-						i=3;
+						
+						String[] parts = inputLine.split("\\s+");
+						
+						int i = Integer.parseInt(parts[1]);
+					    int f = Integer.parseInt(parts[2]);
+					    
+					    
+					    
+					    
+					   
+						
 						String verticalStem = getRandomWordFromFile(i - 1);
 						int numHorizontalWords = i - 1;
 				        String[] horizontalWords = new String[numHorizontalWords];
@@ -256,6 +267,18 @@ public class GameServer {
 				        }
 				        
 				        char[][] puzzle = constructPuzzle(verticalStem, horizontalWords);
+				        
+				        int numPuzzleLetters = 0;
+				        
+				        numPuzzleLetters += verticalStem.length();
+				        
+				        for (String word : horizontalWords) {
+				            numPuzzleLetters += word.length();
+				        }
+				        
+				        int failAttempts = f * numPuzzleLetters;
+				        out.println("Level " + i + " selected");
+				        out.println("Fail attempts remaining: " + failAttempts);
 				        
 				        int letterCount = countPuzzleLetters(puzzle);
 //				        int allowedAttempts = letterCount * f;
@@ -301,21 +324,9 @@ public class GameServer {
 					        }
 				        }
 				        
-					} else if (inputLine.equals("2")) {
-						out.println("Level 2 selected");
-						out.println();
-					} else if (inputLine.equals("3")) {
-						out.println("Level 3 selected");
-						out.println();
-					} else if (inputLine.equals("4")) {
-						out.println("Level 4 selected");
-						out.println();
-					} else if (inputLine.equals("5")) {
-						out.println("Level 5 selected");
-						out.println();
 					} else {
 						out.print("Connected to the game server \n");
-						out.print("Select a game level to play (1-5): \n");
+						out.print("start [level] [failed attempts factor]: \n");
 						out.println();
 					}
 					
