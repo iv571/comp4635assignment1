@@ -288,24 +288,32 @@ public class GameServer {
 				        
 				        System.out.println(revealedPuzzle);
 				        
-				        while (true) {
+				        
+				        boolean gameOn = true;
+				        while (gameOn) {
+				        		
 				        	 if (!formattedPuzzle.contains("_")) {
-						            out.println(formattedPuzzle);
 						            out.println("Congratulations! You have completed the puzzle.");
-						            break;
+						            gameOn = false;
 						        }
 						        
 						        if (failAttempts <= 0) {
 						            out.println("Game over! You have used all your attempts.");
 						            out.println("The solution was:");
 						            out.println(revealedPuzzle);
-						            break;
+						            gameOn = false;
 						        }
 				        	
 				        	
-				        	
-				        	out.println("Fail attempts remaining: " + failAttempts);
-				        	out.println(formattedPuzzle);
+				        	if (gameOn) {
+				        		out.println("Fail attempts remaining: " + failAttempts);
+					        	out.println(formattedPuzzle);
+				        	} else {
+								out.print("start [level] [failed attempts factor]: \n");
+								out.println();
+				        	}
+				    
+				        
 				        	
 							String guess = in.nextLine().trim();
 					        if (guess.isEmpty()) {
@@ -395,6 +403,8 @@ public class GameServer {
 					        
 					       
 				        }
+				        	
+				        
 				        
 					} else {
 						out.print("Connected to the game server \n");
