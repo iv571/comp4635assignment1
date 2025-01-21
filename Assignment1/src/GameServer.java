@@ -278,7 +278,7 @@ public class GameServer {
 				        
 				        int failAttempts = f * numPuzzleLetters;
 				        out.println("Level " + i + " selected");
-				        out.println("Fail attempts remaining: " + failAttempts);
+				    
 				        
 				        int letterCount = countPuzzleLetters(puzzle);
 //				        int allowedAttempts = letterCount * f;
@@ -289,7 +289,24 @@ public class GameServer {
 				        System.out.println(revealedPuzzle);
 				        
 				        while (true) {
+				        	 if (!formattedPuzzle.contains("_")) {
+						            out.println(formattedPuzzle);
+						            out.println("Congratulations! You have completed the puzzle.");
+						            break;
+						        }
+						        
+						        if (failAttempts <= 0) {
+						            out.println("Game over! You have used all your attempts.");
+						            out.println("The solution was:");
+						            out.println(revealedPuzzle);
+						            break;
+						        }
+				        	
+				        	
+				        	
+				        	out.println("Fail attempts remaining: " + failAttempts);
 				        	out.println(formattedPuzzle);
+				        	
 							String guess = in.nextLine().trim();
 					        if (guess.isEmpty()) {
 					            continue;
@@ -317,11 +334,66 @@ public class GameServer {
 					                
 					            }
 					            if (found) {
-					                out.println("Correct letter: " + guessedLetter);
+					                out.println("Letter " + guessedLetter + " Correct");
 					            } else {
 					                out.println("Sorry, letter '" + guessedLetter + "' is not in the puzzle (or already revealed).");
+					                failAttempts = failAttempts - 1;
+					            }
+					        } else if (guess.length() > 1) {
+					        	String lowerRevealed = revealedPuzzle.toLowerCase();
+					            String lowerGuess = guess.toLowerCase();
+					            boolean foundWord = false;
+					            int searchFrom = 0;
+					            
+					            
+					            int colForStem = 4;  // Make sure this matches your constructPuzzle setting.
+					            StringBuilder verticalStemBuilder = new StringBuilder();
+					            int numRows = puzzle.length;
+					            for (int row = 0; row < numRows; row++) {
+					                verticalStemBuilder.append(puzzle[row][colForStem]);
+					            }
+					            String verticalStemString = verticalStemBuilder.toString().toLowerCase();
+					            
+					            if (verticalStemString.equals(lowerGuess)) {
+					                // The guess matches the vertical stem.
+					                // We update formattedPuzzle for each row to reveal the vertical letter.
+					                char[] fpChars = formattedPuzzle.toCharArray();
+					                int numCols = puzzle[0].length;
+					                // We have built the puzzle string row by row, and each row ends with "+\n".
+					                // Determine the total length per row (numCols characters + 2 extra for '+' and newline).
+					                int rowLength = numCols + 2;  // adjust if your formatting changes.
+					                for (int row = 0; row < numRows; row++) {
+					                    int rowStart = row * rowLength;   // Starting index of the row in formattedPuzzle.
+					                    int index = rowStart + colForStem;  // The index corresponding to the vertical letter.
+					                    fpChars[index] = puzzle[row][colForStem];
+					                }
+					                formattedPuzzle = String.valueOf(fpChars);
+					                out.println("Vertical stem \"" + guess + "\" is correct!");
+					                foundWord = true;
+					            }
+					            
+					            while ((searchFrom = lowerRevealed.indexOf(lowerGuess, searchFrom)) != -1) {
+					                // For each occurrence, update the corresponding part in formattedPuzzle.
+					                char[] formattedPuzzleChars = formattedPuzzle.toCharArray();
+					                for (int w = searchFrom; w < searchFrom + guess.length(); w++) {
+					                    formattedPuzzleChars[w] = revealedPuzzle.charAt(w);
+					                }
+					                formattedPuzzle = String.valueOf(formattedPuzzleChars);
+					                out.println("Found the word at position: " + searchFrom);
+					                foundWord = true;
+					                // Move search index beyond this occurrence.
+					                searchFrom += guess.length();
+					            }
+					            
+					            if (foundWord) {
+					                out.println("Word \"" + guess + "\" is correct!");
+					            } else {
+					                out.println("Sorry, the word \"" + guess + "\" is not in the puzzle (or already revealed).");
+					                failAttempts = failAttempts - 1;
 					            }
 					        }
+					        
+					       
 				        }
 				        
 					} else {
