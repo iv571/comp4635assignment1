@@ -10,8 +10,10 @@ import java.util.concurrent.Executors;
 import java.net.*;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.AbstractMap;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.Random;
 import java.util.Scanner;
 
@@ -70,15 +72,17 @@ public class GameServer {
         return words.get(rand.nextInt(words.size()));
 	  }
 	
-	private static String getConstrainedRandomWord(char constraint, int minLength) {
+	private static Map.Entry<Integer, String> getConstrainedRandomWord(char constraint, int minLength) {
 		List<String> words = new ArrayList<>();
+		Random random = new Random();
+		 int randomIndex = random.nextInt(4);
 	    try (BufferedReader br = new BufferedReader(new FileReader("words.txt"))) {
 	        String line;
 	        while ((line = br.readLine()) != null) {
 	            line = line.trim();
 	            // Check if the line is not empty, meets the minimum length,
 	            // and starts with the specified constraint character.
-	            if (!line.isEmpty() && line.length() >= minLength && line.charAt(0) == constraint) {
+	            if (!line.isEmpty() && line.length() >= minLength && line.charAt(randomIndex) == constraint) {
 	                words.add(line);
 	            }
 	        }
@@ -87,17 +91,21 @@ public class GameServer {
 	    }
 
 	    // If no matching word is found, fall back to a general random word from the file.
-	    if (words.isEmpty()) {
-	        return getRandomWordFromFile(minLength);
-	    }
-	    
+//	    if (words.isEmpty()) {
+//	        return getRandomWordFromFile(minLength);
+//	    }
+//	    
 	    Random rand = new Random();
-	    return words.get(rand.nextInt(words.size()));
+	   
+	    return new AbstractMap.SimpleEntry<>(randomIndex, words.get(rand.nextInt(words.size())));
       
     }
 	
 	private static char[][] constructPuzzle(String verticalStem, String[] horizontalWords) {
         // Determine puzzle dimensions.
+		
+	
+	   
         int numRows = verticalStem.length();
         int numCols = 18;
         char[][] grid = new char[numRows][numCols];
@@ -118,8 +126,10 @@ public class GameServer {
         // Place horizontal words in the corresponding rows.
         // Each horizontal word is placed starting at the vertical stem column,
         // ensuring that the word overlaps with the vertical letter.
+        
         for (int row = 0; row < horizontalWords.length && row < numRows; row++) {
             String word = horizontalWords[row];
+            
             for (int j = 0; j < word.length() && (colForStem + j) < numCols; j++) {
                 grid[row][colForStem + j] = word.charAt(j);
             }
@@ -259,11 +269,21 @@ public class GameServer {
 						String verticalStem = getRandomWordFromFile(i - 1);
 						int numHorizontalWords = i - 1;
 				        String[] horizontalWords = new String[numHorizontalWords];
+				        int[] indexes = new int[numHorizontalWords];
 				        for (int j = 0; j < numHorizontalWords; j++) {
 				            // Constraint: horizontal word starts with the corresponding letter of the vertical stem.
 				            char constraint = verticalStem.charAt(j % verticalStem.length());
-				            horizontalWords[j] = getConstrainedRandomWord(constraint, i - 1);
+				            System.out.println("Constraint: " + constraint);
+				            Map.Entry<Integer, String> result = getConstrainedRandomWord(constraint, i - 1);
+				            
+				            int indexUsed = result.getKey(); 
+				            String word = result.getValue();
+				            
+				            horizontalWords[j] = word;
+				            indexes[j] = indexUsed;
+				            
 				            System.out.println("Horizontal word for letter '" + constraint + "': " + horizontalWords[j]);
+				            System.out.println("Index for letter '" + constraint + "': " + indexes[j]);
 				        }
 				        
 				        char[][] puzzle = constructPuzzle(verticalStem, horizontalWords);
