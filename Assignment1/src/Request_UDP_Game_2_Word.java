@@ -4,49 +4,45 @@ import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
 import java.net.*;
+import java.util.Arrays;
 
 public class Request_UDP_Game_2_Word {
 	
-	private final int SERVER_PORT = 5600;
+	private final int WORD_SERVER_PORT = 5600;
 	
+	private final String WORD_SERVER_host = "localhost";
+
 	private final int BUFFER_LIMIT = 1024;
 	
 	private DatagramSocket socket = null;
 		
-	private char[][] game_map = null;
+	private String[] game_map = null;
 	
-	private int request = 2;
-
-	public Request_UDP_Game_2_Word(int port) throws IOException {
+	public Request_UDP_Game_2_Word() throws IOException {
 		
-		socket = new DatagramSocket(port);
+		socket = new DatagramSocket(0);
+		
+		game_map = new String[1];
+
 	}
 	
-	public static void main(String[] args) throws IOException {
+	public static String[] send_request (int request, String word, int word_len) throws IOException {
 		
-		Request_UDP_Game_2_Word client_server = check_connection_validity(args);
+		Request_UDP_Game_2_Word client_server = new Request_UDP_Game_2_Word();
 		
-        try {
-        
-        	byte[] request_buf = client_server.pack_request_data (args, "aa", 0, 0);
+		try {
+	        
+        	byte[] request_buf = client_server.pack_request_data (word, request, word_len);
 
-        	client_server.send_request (request_buf, args);
+        	client_server.send_request (request_buf);
         	       
-        	int result = client_server.receive_respond ();
+        	int result = client_server.receive_respond (word_len, request);
 
-	        if (client_server.game_map == null) {
-	        	
-	        	
-	        	if (result == 1)
-	        		System.err.println("Request processed");
-	        	
-	        	else
-	        		System.err.println("Request fail");
-	        }
-        	
+        	client_server.print_result(result, request);
+        
         } catch (NumberFormatException e) {
         	
-			System.err.println("Invalid port number: " + args[1] + ".");
+			System.err.println("Invalid port number: " + client_server.socket.getLocalPort() + ".");
 			
 			System.err.println(e.getMessage());
 			
@@ -60,47 +56,40 @@ public class Request_UDP_Game_2_Word {
 			
 		}
         
+		return client_server.game_map;
+		
 	}
 	
-	private static Request_UDP_Game_2_Word check_connection_validity(String[] args) {
+	private void print_result (int result, int request) {
 		
-		int port = 0;
+		final int GENERATE_MAP = 0;
 		
-		Request_UDP_Game_2_Word client_server = null;
-				
-
-        if (args.length != 2) {
+		if (request != GENERATE_MAP) {
         	
-			System.out.println("java SingleRequestUDPClient [host] [port]");
-			
-			System.exit(1);
-		}
-        
-		try {
-		    
-			port = Integer.parseInt(args[1]);
-			
-			client_server = new Request_UDP_Game_2_Word(port);
-       
-		} catch (NumberFormatException e) {
-		
-			System.err.println("Invalid port number: " + port + ".");
-			
-			System.exit(1);
-	
-		} catch (IOException e) {
-        
-			System.out.println("Exception caught when trying to listen on port "
-                + port);
-           
-			System.out.println(e.getMessage());
+        	if (result == 1) {
+        		
+        		System.err.println("Request processed");
+        		
+        		game_map[0] = "T";
+        	
+        	}else{
+        		
+        		System.err.println("Request fail");
+    			
+        		game_map[0] = "F";
+        	}
+        	
+        	
+        } else {
+        	
+    		System.err.println("Game Map generated\n" + Arrays.toString(game_map));
+    		
         }
 		
-		return client_server;
-		
 	}
 	
-	private byte[] pack_request_data (String[] args, String target_word, int word_num, int failed_attempts_num) throws IOException {
+	
+	private byte[] pack_request_data (String target_word, int request ,int word_num) throws IOException {
 		
 		final int GENERATE_MAP = 0;
 		
@@ -116,26 +105,23 @@ public class Request_UDP_Game_2_Word {
         
         	dataStream_out.writeBytes(target_word);
       
-        } else {
+        } else 
         	
         	dataStream_out.writeInt(word_num);
         	
-        	dataStream_out.writeInt(failed_attempts_num);
-
-        }
+        
         
        return byteStream_out.toByteArray();
 
 		
 	}
 	
-	private void send_request (byte[] request_buf, String[] args) throws IOException {
+	private void send_request (byte[] request_buf) throws IOException {
 		
-		String host = args[0];
     	    	  
-        InetAddress address = InetAddress.getByName(host);
+        InetAddress address = InetAddress.getByName(WORD_SERVER_host);
         
-        DatagramPacket packet = new DatagramPacket(request_buf, request_buf.length, address, SERVER_PORT);
+        DatagramPacket packet = new DatagramPacket(request_buf, request_buf.length, address, WORD_SERVER_PORT);
         
         socket.send(packet);
 		
@@ -143,7 +129,7 @@ public class Request_UDP_Game_2_Word {
 		
 	}
 	
-	private int receive_respond () throws IOException {
+	private int receive_respond (int word_len, int request) throws IOException {
 		
 		int result = 0;
 		
@@ -163,13 +149,41 @@ public class Request_UDP_Game_2_Word {
         	
         	result = dataStream.readInt();
 
-        else {}
-        	// read the game map
+        else {
+        	
+        	game_map = extract_word_stem(dataStream, word_len);
+        
+        	result = -1;
+        	
+        }
         	
         	return result;
         
-        
-        
+    
+	}
+
+	private String[] extract_word_stem(DataInputStream dataStream, int word_len) throws IOException {
+
+		int string_len;
+		
+		byte[] string_bytes;
+
+		String[] word_stem = new String[word_len];
+		
+		for (int index = 0; index < word_len; index++) {
+			
+			string_len = dataStream.readInt();
+			
+			string_bytes = new byte [string_len];
+			
+			dataStream.readFully(string_bytes);
+			
+			word_stem[index] = new String (string_bytes);
+						
+		}
+		
+		return word_stem;
+
 	}
 	
 	
