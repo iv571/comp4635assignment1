@@ -67,7 +67,7 @@ public class Word_UDP_Server {
 			System.err.println("Invalid port number: " + port + ".");
 			
 			System.exit(1);
-	
+			
 		} catch (IOException e) {
         
 			System.out.println("Exception caught when trying to listen on port "

@@ -38,9 +38,10 @@ public class Request_UDP_Game_2_Word {
 	        	
 	        	
 	        	if (result == 1)
-	        		System.err.println("TRUE");
+	        		System.err.println("Request processed");
+	        	
 	        	else
-	        		System.err.println("FALSE");
+	        		System.err.println("Request fail");
 	        }
         	
         } catch (NumberFormatException e) {
