@@ -110,7 +110,8 @@ public class Word_UDP_Server {
 		int request = dataStream.readInt();   		
 		
 		int word_num = 0, string_len = 0;
-		
+
+		Object result;
 		
 		if (request == GENERATE_MAP) 
 			
@@ -128,21 +129,22 @@ public class Word_UDP_Server {
 			
 		}
 		
-		Object result = 
-				
-				switch (request) {
-					
-					case GENERATE_MAP -> Word.generate_map(word_num);
-				
-					case ADD_WORD -> Word.add_word(target_word);
-					
-					case REMOVE_WORD -> Word.remove_word(target_word);
-					
-					case CHECK_WORD -> Word.check_word(target_word);
-					
-					default -> throw new IllegalArgumentException("Unexpected value: " + request);
-				
-				};
+		synchronized (new Object()) {
+			 
+			result = switch (request) {
+			
+				case GENERATE_MAP -> Word.generate_map(word_num);
+			
+				case ADD_WORD -> Word.add_word(target_word);
+			   
+				case REMOVE_WORD -> Word.remove_word(target_word);
+			   
+				case CHECK_WORD -> Word.check_word(target_word);
+			   
+				default -> throw new IllegalArgumentException("Unexpected value: " + request);
+			   
+				};		
+		}
 	
 		if (result instanceof List)	{
 			

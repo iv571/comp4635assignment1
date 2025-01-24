@@ -7,10 +7,12 @@ public class Test_Game_2_Word {
 		int request = 0;
 	
 		int word_len = 5;
+
+		int local_host = 0;
 		
 		String word = "above";
 
-		Request_UDP_Game_2_Word.send_request (request, word, word_len);
+		Request_UDP_Game_2_Word.send_request (request, word, word_len, local_host);
 		
 		
 		

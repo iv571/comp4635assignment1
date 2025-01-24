@@ -8,30 +8,30 @@ import java.util.Arrays;
 
 public class Request_UDP_Game_2_Word {
 	
-	private final int WORD_SERVER_PORT = 5600;
+	private static final int WORD_SERVER_PORT = 5600;
 	
-	private final String WORD_SERVER_host = "localhost";
+	private static final String WORD_SERVER_host = "localhost";
 
-	private final int BUFFER_LIMIT = 1024;
+	private static final int BUFFER_LIMIT = 1024;
 	
 	private DatagramSocket socket = null;
 		
 	private String[] game_map = null;
 	
-	public Request_UDP_Game_2_Word() throws IOException {
+	public Request_UDP_Game_2_Word(int local_host) throws IOException {
 		
-		socket = new DatagramSocket(0);
+		socket = new DatagramSocket(local_host);
 		
 		game_map = new String[1];
 
 	}
 	
-	public static String[] send_request (int request, String word, int word_len) throws IOException {
-		
-		Request_UDP_Game_2_Word client_server = new Request_UDP_Game_2_Word();
+	public static String[] send_request (int request, String word, int word_len, int local_host) {
 		
 		try {
 	        
+			Request_UDP_Game_2_Word client_server = new Request_UDP_Game_2_Word(local_host);
+
         	byte[] request_buf = client_server.pack_request_data (word, request, word_len);
 
         	client_server.send_request (request_buf);
@@ -39,10 +39,12 @@ public class Request_UDP_Game_2_Word {
         	int result = client_server.receive_respond (word_len, request);
 
         	client_server.print_result(result, request);
+
+			return client_server.game_map;
         
         } catch (NumberFormatException e) {
         	
-			System.err.println("Invalid port number: " + client_server.socket.getLocalPort() + ".");
+			System.err.println("Invalid port number: " + local_host + ".");
 			
 			System.err.println(e.getMessage());
 			
@@ -56,7 +58,7 @@ public class Request_UDP_Game_2_Word {
 			
 		}
         
-		return client_server.game_map;
+		return null;
 		
 	}
 	
