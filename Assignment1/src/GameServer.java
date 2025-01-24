@@ -324,6 +324,18 @@ public class GameServer {
 					            char guessedLetter = guess.charAt(0);
 					            boolean found = false;
 					            
+					            
+					            if (guessedLetter == '$') {
+					            	System.out.println("Displaying score: ");
+					            	
+					            } else if (guessedLetter == '!') {
+					            	out.println("Starting new game ...");
+					            	break;
+					            } else if (guessedLetter == '#') {
+					            	out.println("Ending the game ...");
+					            	break;
+					            }
+					            
 					            out.println("Guessed letter: " + guessedLetter);
 					            // Loop over the solution grid (the "revealedPuzzle") to search for all instances.
 					            for (int x = 0; x < revealedPuzzle.length(); x++) {
@@ -406,15 +418,35 @@ public class GameServer {
 				        	
 				        
 				        
-					} else if (inputLine.matches("add\\s+\\d+")) {
-						
-					} else {
+					} else if (inputLine.matches("add\\s+\\S+")) {
+						out.print("add word");
+					} else if (inputLine.matches("remove\\s+\\S+")) {
+					    // e.g. "remove apple"
+					    // handle remove command
+						out.print("remove word");
+					    
+					} else if (inputLine.matches("check\\s+score")) {
+					    // e.g. "check score"
+					    // handle check score command
+						out.print("checking score...");
+					    
+					} else if (inputLine.matches("check\\s+\\S+")) {
+					    // e.g. "check apple"
+					    // handle check [word] command
+						out.print("checking word...");
+					}
+					else {
 						out.print("Connected to the game server \n");
-						out.print("start [level] [failed attempts factor] \n\n");
+				
+						out.print("---------CRISS CROSS WORD PUZZLE---------\n");
+			
+						out.print("start [level] [failed attempts factor] \n");
 						out.print("add [word] \n");
 						out.print("remove [word] \n");
 						out.print("check [word] \n");
 						out.print("check score \n");
+						
+				
 						out.println();
 					}
 					
