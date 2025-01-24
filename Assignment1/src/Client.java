@@ -1,4 +1,4 @@
-import java.io.Console;
+
 import java.io.IOException;
 import java.net.*;
 import java.util.concurrent.ExecutorService;
@@ -34,32 +34,22 @@ public class Client {
 			Scanner input = new Scanner(link.getInputStream()); //Step 2.
 			PrintWriter output = new PrintWriter(link.getOutputStream(),true); //Step 2.
 			
-			 Console console = System.console();
-			
 			Scanner userEntry = new Scanner(System.in);
 			
 			String message, response;
 			
-			//login
-//			System.out.println("Enter your username: ");
-//			String username = userEntry.nextLine().trim();
-//            System.out.println("Username: " + username);
-//            
-//            System.out.println("Enter your password: ");
-//            String password = userEntry.nextLine().trim();
-//	        System.out.println("Password received for " + username);
-	
-		
-
-			
-	        System.out.println("Press Enter to start the game");
+			System.out.println("Enter username: ");
+			String username = userEntry.nextLine();
+			System.out.println("Enter password: ");
+			String password = userEntry.nextLine();
+			System.out.println("Press enter to start: ");
 			
 			do {
-				
 				message = userEntry.nextLine();
-				
 				output.println(message); //Step 3.
-				System.out.println(message);
+				
+//				System.out.println("\nGAMESERVER> " + response);
+				
 				
 	            while (input.hasNextLine() && !(response = input.nextLine()).isEmpty()) {
 	                System.out.println("\nGAMESERVER> " + response);

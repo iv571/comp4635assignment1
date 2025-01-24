@@ -109,6 +109,9 @@ public class Word {
 	
 		horizontal_stem.add(0, verticle_stem);
 		
+		System.out.println("horizontal_stem: \n" + horizontal_stem);
+
+		
 		return horizontal_stem;
 	}
 	
@@ -128,7 +131,7 @@ public class Word {
         		 
         	return null;
 		
-        int random_index = new Random().nextInt(words.size());
+        int random_index = new Random().nextInt(filtered_words.size());
 
         return filtered_words.get(random_index);
         	 
@@ -140,16 +143,18 @@ public class Word {
 
 		List<String> horizontal_stem = new ArrayList<>();
 
+		System.out.println("verticle_stem: " + verticle_stem);
+		
 		for (int word_char_position = 0;  word_char_position < word_len;  word_char_position++) {
 			
             char target_letter = verticle_stem.charAt(word_char_position);
             
             String horizontal_word = find_constrained_word(target_letter, word_len - 1);
-            
+                        
             if (horizontal_word == null)
             	
             	return null;
-            
+            	
             horizontal_stem.add(horizontal_word);
         }
 		
@@ -161,20 +166,18 @@ public class Word {
 		List<String> candidate = new ArrayList<>();
 		
 		for (String word : words) 
-			
-			for (char curr_letter : word.toCharArray()) 
-				
-                if (word.indexOf(curr_letter) != -1) {
+							
+                if (word.indexOf(target_letter) != -1) {
                  
                 	candidate.add(word);
 			
-                	break;
                 }
 		
 		if (candidate.isEmpty())
 			
 			return null;
 		
+	
 		return candidate.get(new Random().nextInt(candidate.size()));
 
 	}

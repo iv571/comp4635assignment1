@@ -112,11 +112,11 @@ public class Word_UDP_Server {
 		int word_num = 0, string_len = 0;
 		
 		
-		if (request == GENERATE_MAP) {
+		if (request == GENERATE_MAP) 
 			
 			word_num = dataStream.readInt();
-						
-		} else {
+
+		 else {
 			
 			string_len = dataStream.readInt();
 			
@@ -162,22 +162,39 @@ public class Word_UDP_Server {
 			
         DataOutputStream dataStream_out = new DataOutputStream(byteStream_out);
         
-        if (result != -1) {
+        if (result != -1) 
         	
         	dataStream_out.writeInt(result);
         
-        	respond_buf = byteStream_out.toByteArray();
-        
-        } else {
+         else 
         	
-        	// send the game map
-        }
-	
+        	dataStream_out = packed_word_stem (byteStream_out);
+        	
+        
+    	respond_buf = byteStream_out.toByteArray();
+        
         return respond_buf;
 
 	
 	}
 	
+	private DataOutputStream packed_word_stem(ByteArrayOutputStream byteStream_out) throws IOException {
+
+		DataOutputStream dataStream_out = new DataOutputStream(byteStream_out);
+		
+		for (String word : game_map) {
+			
+			dataStream_out.writeInt(word.length());            
+
+			dataStream_out.writeBytes(word); 
+            
+		}
+		
+		
+		return dataStream_out;
+		
+	}
+
 	private void send_result (byte[] respond_buf) throws IOException {
 		
         int port = udp_receive_packet.getPort();
