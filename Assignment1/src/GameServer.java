@@ -11,6 +11,7 @@ import java.net.*;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Random;
 import java.util.Scanner;
@@ -29,16 +30,44 @@ public class GameServer {
 		}
 
 		int port = 0;
+		int udpPort = 5600;
 		ServerSocket server = null;
 
 		try {
 			port = Integer.parseInt(args[0]);
 			server = new ServerSocket(port);
 			System.out.println("The game server is running...");
+			
+			Thread udpServerThread = new Thread(() -> {
+	            try {
+	                // Initialize the Word UDP Server
+	                Word_UDP_Server udpServer = new Word_UDP_Server(udpPort);
+	                System.out.println("Word UDP Server is running on port " + udpPort + "...");
+	                // Initialize Word with words.txt
+	                new Word("words.txt");
+	                // Start serving
+	                udpServer.serve();
+	               
+	            } catch (IOException e) {
+	                System.err.println("Failed to start Word UDP Server on port " + udpPort + ": " + e.getMessage());
+	                e.printStackTrace();
+	                
+	                
+	            }
+	            
+		  });
+			
+			udpServerThread.start();
+			
+			
 			ExecutorService fixedThreadPool = Executors.newFixedThreadPool(20);
 			while (true) {
 				fixedThreadPool.execute(new ReverseEchoClientHandler(server.accept()));
 			}
+			
+			  
+			  
+			  
 		} catch (IOException e) {
 			System.out.println(
 					"Exception caught when trying to listen on port " + port + " or listening for a connection");
@@ -46,6 +75,14 @@ public class GameServer {
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
+		
+		
+      
+            
+            
+      
+
+       // Start the UDP server thread
 	}
 	
 	private static String getRandomWordFromFile(int minLength) {
@@ -441,11 +478,52 @@ public class GameServer {
 				        
 				        
 					} else if (inputLine.matches("add\\s+\\S+")) {
-						out.print("add word");
+						out.println("Adding word ...");
+				
+						
+						 // Split the input line by whitespace to extract the command and the word
+					    String[] parts = inputLine.split("\\s+");
+					    
+					    // Ensure that the command has a word following it
+					    
+					        String word = parts[1]; // Extract the word to add
+					        int word_len = word.length(); // Calculate the length of the word
+					    
+						
+						String [] wordServiceRequest = Request_UDP_Game_2_Word.send_request(1, word, word_len, 0);
+						
+						if (wordServiceRequest[0].equals("T")) {
+							out.println("Word added");
+							out.println();
+						} else {
+							out.println("Word not added");
+							out.println();
+						}
+						
 					} else if (inputLine.matches("remove\\s+\\S+")) {
 					    // e.g. "remove apple"
 					    // handle remove command
-						out.print("remove word");
+						out.println("Removing word ...");
+						
+						
+						 // Split the input line by whitespace to extract the command and the word
+					    String[] parts = inputLine.split("\\s+");
+					    
+					    // Ensure that the command has a word following it
+					    
+					        String word = parts[1]; // Extract the word to add
+					        int word_len = word.length(); // Calculate the length of the word
+					    
+						
+						String [] wordServiceRequest = Request_UDP_Game_2_Word.send_request(2, word, word_len, 0);
+						
+						if (wordServiceRequest[0].equals("T")) {
+							out.println("Word removed");
+							out.println();
+						} else {
+							out.println("Word not removed");
+							out.println();
+						}
 					    
 					} else if (inputLine.matches("check\\s+score")) {
 					    // e.g. "check score"
@@ -455,7 +533,27 @@ public class GameServer {
 					} else if (inputLine.matches("check\\s+\\S+")) {
 					    // e.g. "check apple"
 					    // handle check [word] command
-						out.print("checking word...");
+						out.println("Checking word ...");
+						
+						
+						 // Split the input line by whitespace to extract the command and the word
+					    String[] parts = inputLine.split("\\s+");
+					    
+					    // Ensure that the command has a word following it
+					    
+					        String word = parts[1]; // Extract the word to add
+					        int word_len = word.length(); // Calculate the length of the word
+					    
+						
+						String [] wordServiceRequest = Request_UDP_Game_2_Word.send_request(3, word, word_len, 0);
+						
+						if (wordServiceRequest[0].equals("T")) {
+							out.println("Word in word repository");
+							out.println();
+						} else {
+							out.println("Word not in word repository");
+							out.println();
+						}
 					}
 					else {
 						out.print("Connected to the game server \n");

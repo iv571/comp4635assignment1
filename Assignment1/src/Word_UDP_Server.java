@@ -9,7 +9,7 @@ import java.net.InetAddress;
 import java.net.SocketException;
 import java.util.List;
 
-public class Word_UDP_Server {
+public class Word_UDP_Server implements Runnable {
 
 	private List<String> game_map = null;
 	
@@ -214,7 +214,7 @@ public class Word_UDP_Server {
         return;
 	}
 	
-	private void serve() {
+	void serve() {
 		
 		while(true) {
 			
@@ -242,6 +242,12 @@ public class Word_UDP_Server {
 				e.printStackTrace();
 			}
 		}	
+	}
+
+	@Override
+	public void run() {
+		// TODO Auto-generated method stub
+		serve();
 	}
 	
     
