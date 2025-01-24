@@ -78,7 +78,7 @@ public class GameServer {
 	            line = line.trim();
 	            // Check if the line is not empty, meets the minimum length,
 	            // and starts with the specified constraint character.
-	            if (!line.isEmpty() && line.length() >= minLength && line.charAt(0) == constraint) {
+	            if (!line.isEmpty() && line.length() >= minLength && line.indexOf(constraint) >= 0) {
 	                words.add(line);
 	            }
 	        }
@@ -120,8 +120,28 @@ public class GameServer {
         // ensuring that the word overlaps with the vertical letter.
         for (int row = 0; row < horizontalWords.length && row < numRows; row++) {
             String word = horizontalWords[row];
+            char letter = verticalStem.charAt(row);
+            
+            int k = word.indexOf(letter);
+            
+            if (k < 0) {
+                // The word doesn't actually contain the letter? skip
+                continue;
+            }
+            
+            int startCol = colForStem - k;
+            
+            if (startCol < 0) {
+                // Shift everything to the right so it starts at col 0
+                startCol = 0;
+            } 
+            
             for (int j = 0; j < word.length() && (colForStem + j) < numCols; j++) {
-                grid[row][colForStem + j] = word.charAt(j);
+            	int c = startCol + j;
+            	
+                    grid[row][c] = word.charAt(j);
+         
+              
             }
         }
         return grid;
@@ -261,8 +281,10 @@ public class GameServer {
 				        String[] horizontalWords = new String[numHorizontalWords];
 				        for (int j = 0; j < numHorizontalWords; j++) {
 				            // Constraint: horizontal word starts with the corresponding letter of the vertical stem.
-				            char constraint = verticalStem.charAt(j % verticalStem.length());
+				            char constraint = verticalStem.charAt(j);
 				            horizontalWords[j] = getConstrainedRandomWord(constraint, i - 1);
+				            System.out.println("Row " + j + " / constraint=" + constraint
+				                       + " => " + horizontalWords[j]);
 				            System.out.println("Horizontal word for letter '" + constraint + "': " + horizontalWords[j]);
 				        }
 				        
