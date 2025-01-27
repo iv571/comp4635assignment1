@@ -473,9 +473,8 @@ public class GameServer {
 					        }
 					        
 					       
-				        }
-				        	
-				        
+				        }    	
+				
 				        
 					} else if (inputLine.matches("add\\s+\\S+")) {
 						out.println("Adding word ...");
