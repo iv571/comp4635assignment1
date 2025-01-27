@@ -312,7 +312,7 @@ public class GameServer {
 					    
 					    
 					    
-					    
+					    //
 						
 						String verticalStem = getRandomWordFromFile(i - 1);
 						System.out.println("Vertical Stem: " + verticalStem);
