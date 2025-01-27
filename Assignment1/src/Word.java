@@ -26,7 +26,7 @@ public class Word {
 			br = new BufferedReader(new FileReader(file_name));
 			
 			for (String line = br.readLine(); line != null; line = br.readLine()) {
-                words.add(line);
+                words.add(line.toLowerCase());
             }
 		
 		} catch (IOException e) {

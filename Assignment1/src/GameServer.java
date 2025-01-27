@@ -21,6 +21,7 @@ import java.io.*;
 
 public class GameServer {
 	private static final String USAGE = "Usage: java GameServer [port]";
+	private volatile boolean isRunning = true;
 	private int count = 0;
 	
 	public static void main(String[] args) throws IOException {
@@ -311,9 +312,17 @@ public class GameServer {
 					    
 					    
 					    
-					   
+					    
 						
 						String verticalStem = getRandomWordFromFile(i - 1);
+						System.out.println("Vertical Stem: " + verticalStem);
+						String [] wordServiceRequest = Request_UDP_Game_2_Word.send_request(0, verticalStem, verticalStem.length(), 0);
+						String[] gameMapArray = Arrays.copyOfRange(wordServiceRequest, 1, i);
+						 List<String> gameMap = Arrays.asList(wordServiceRequest);
+					
+						System.out.println("Word Service Request: " + Arrays.toString(wordServiceRequest));
+						
+						
 						int numHorizontalWords = i - 1;
 				        String[] horizontalWords = new String[numHorizontalWords];
 				        for (int j = 0; j < numHorizontalWords; j++) {
@@ -325,7 +334,7 @@ public class GameServer {
 				            System.out.println("Horizontal word for letter '" + constraint + "': " + horizontalWords[j]);
 				        }
 				        
-				        char[][] puzzle = constructPuzzle(verticalStem, horizontalWords);
+				        char[][] puzzle = constructPuzzle(gameMap.get(0), gameMapArray);
 				        
 				        int numPuzzleLetters = 0;
 				        
@@ -353,7 +362,10 @@ public class GameServer {
 				        		
 				        	 if (!formattedPuzzle.contains("_")) {
 						            out.println("Congratulations! You have completed the puzzle.");
-						            gameOn = false;
+						            out.println("Press enter: ");
+					            	out.println();
+					            	gameOn = false;
+					            	continue;
 						        }
 						        
 						        if (failAttempts <= 0) {
@@ -361,6 +373,7 @@ public class GameServer {
 						            out.println("The solution was:");
 						            out.println(revealedPuzzle);
 						            gameOn = false;
+						            continue;
 						        }
 				        	
 				        	
@@ -375,25 +388,35 @@ public class GameServer {
 				        
 				        	
 							String guess = in.nextLine().trim();
+							char guessedLetter = guess.charAt(0);
+							
+							if (guessedLetter == '$') {
+				            	out.println("Displaying score: ");
+				            	continue;
+				            } else if (guessedLetter == '!') {
+				            	out.println("Starting new game ...");
+				            	out.println("Press enter: ");
+				            	out.println();
+				            	gameOn = false;
+				            	continue;
+				            } else if (guessedLetter == '#') {
+				            	out.println("Ending the game ...");
+				            	out.println("Game Over");
+				            	break;
+				            
+				            }
+							
+							
 					        if (guess.isEmpty()) {
 					            continue;
 					        } else if (guess.length() == 1) {
 					        	
 					        	// Process a single letter guess.
-					            char guessedLetter = guess.charAt(0);
+					            
 					            boolean found = false;
 					            
 					            
-					            if (guessedLetter == '$') {
-					            	System.out.println("Displaying score: ");
-					            	
-					            } else if (guessedLetter == '!') {
-					            	out.println("Starting new game ...");
-					            	break;
-					            } else if (guessedLetter == '#') {
-					            	out.println("Ending the game ...");
-					            	break;
-					            }
+					            
 					            
 					            out.println("Guessed letter: " + guessedLetter);
 					            // Loop over the solution grid (the "revealedPuzzle") to search for all instances.
