@@ -1,4 +1,3 @@
-
 import java.io.IOException;
 import java.net.*;
 import java.util.concurrent.ExecutorService;
@@ -10,7 +9,7 @@ import java.io.PrintWriter;
 public class Client {
 	private static InetAddress host;
 	private static final int PORT = 5599;
-	private static final String USAGE = "Usage: java Client [host] [port] [request]";
+	private static final String USAGE = "Usage: java Client [host] [port] [request]"; // [request] is not used - redundant code
 	
 	public static void main(String[] args) throws IOException {
 		Client instance = new Client();
@@ -28,7 +27,7 @@ public class Client {
 	static void accessServer(String args, int port) {
 		Socket link = null; //Step 1.
 		try {
-			host = InetAddress.getLocalHost();
+			host = InetAddress.getLocalHost(); // This might be not neccessary 
 			link = new Socket(args, port); //Step 1.
 			
 			Scanner input = new Scanner(link.getInputStream()); //Step 2.
@@ -48,7 +47,7 @@ public class Client {
 				message = userEntry.nextLine();
 				output.println(message); //Step 3.
 				
-//				System.out.println("\nGAMESERVER> " + response);
+//	System.out.println("\nGAMESERVER> " + response);
 				
 				
 	            while (input.hasNextLine() && !(response = input.nextLine()).isEmpty()) {
@@ -69,7 +68,3 @@ public class Client {
 	
 	
 }
-
-
-
-
