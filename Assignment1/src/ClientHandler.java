@@ -61,34 +61,21 @@ public class ClientHandler implements Runnable {
         if (accounts.containsKey(username)) {
             return "ERROR: Account already exists.";
         }
-        try {
-            String encryptedPassword = EncryptionUtils.encrypt(password);
-            Account account = new Account(username, encryptedPassword);
-            accounts.put(username, account);
-            System.out.println(
-                    "User Info: " + account.getUsername() + " " + EncryptionUtils.decrypt(account.getPassword()));
-            return "Account created successfully.";
-        } catch (Exception e) {
-            e.printStackTrace();
-            return "ERROR: Unable to create account.";
-        }
+        Account account = new Account(username, password);
+        accounts.put(username, account);
+        // System.out.println("User Info: " + account.getUsername()
+        // + " " + account.getPassword());
+        return "Account created successfully.";
     }
 
     private String login(String username, String password) {
         Account account = accounts.get(username);
-        if (account != null) {
-            try {
-                if (EncryptionUtils.decrypt(account.getPassword()).equals(password)) {
-                    return "Login successful.";
-                }
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
+        if (account != null && account.getPassword().equals(password)) {
+            return "Login successful.";
         }
         return "ERROR: Invalid username or password.";
     }
 
-    // Update the account score (add score to the list of scores)
     private String updateScore(String username, int score) {
         Account account = accounts.get(username);
         if (account != null) {
@@ -98,15 +85,14 @@ public class ClientHandler implements Runnable {
         return "ERROR: Account not found.";
     }
 
-    // Get the historical scores of the account
     private String getScore(String username) {
         Account account = accounts.get(username);
         if (account != null) {
             if (account.getScores().isEmpty()) {
                 return "No Historical Record";
             }
-            return "Scores: " + account.getScores().toString(); 
-        } 
+            return "Scores: " + account.getScores();
+        }
         return "ERROR: Account not found.";
     }
 }
