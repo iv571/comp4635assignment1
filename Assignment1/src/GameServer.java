@@ -123,7 +123,7 @@ public class GameServer {
 	            line = line.trim();
 	            // Check if the line is not empty, meets the minimum length,
 	            // and starts with the specified constraint character.
-	            if (!line.isEmpty() && line.length() >= minLength && line.indexOf(constraint) >= 0) {
+	            if (!line.isEmpty() && line.length() >= minLength && line.toLowerCase().indexOf(Character.toLowerCase(constraint)) >= 0) {
 	                words.add(line);
 	            }
 	        }
@@ -144,7 +144,7 @@ public class GameServer {
 	private static char[][] constructPuzzle(String verticalStem, String[] horizontalWords) {
         // Determine puzzle dimensions.
         int numRows = verticalStem.length();
-        int numCols = 18;
+        int numCols = 20;
         char[][] grid = new char[numRows][numCols];
 
         // Initialize the grid with '.' to denote empty spaces.
@@ -155,7 +155,7 @@ public class GameServer {
         }
 
         // Place the vertical stem in a fixed column (e.g., column 4).
-        int colForStem = 9;
+        int colForStem = 10;
         for (int row = 0; row < verticalStem.length(); row++) {
             grid[row][colForStem] = verticalStem.charAt(row);
         }
@@ -164,28 +164,47 @@ public class GameServer {
         // Each horizontal word is placed starting at the vertical stem column,
         // ensuring that the word overlaps with the vertical letter.
         for (int row = 0; row < horizontalWords.length && row < numRows; row++) {
-            String word = horizontalWords[row];
-            char letter = verticalStem.charAt(row);
+            String hWord = horizontalWords[row];
+            char constraint = verticalStem.charAt(row);
             
-            int k = word.indexOf(letter);
+            int constraintIndex = hWord.toLowerCase().indexOf(Character.toLowerCase(constraint));
             
-            if (k < 0) {
+            
+            
+            if (constraintIndex < 0) {
                 // The word doesn't actually contain the letter? skip
                 continue;
             }
             
-            int startCol = colForStem - k;
+            int startCol = colForStem - constraintIndex;
             
             if (startCol < 0) {
                 // Shift everything to the right so it starts at col 0
                 startCol = 0;
-            } 
+            } else if (startCol + hWord.length() > numCols) {
+                startCol = numCols - hWord.length();
+            }
             
-            for (int j = 0; j < word.length() && (colForStem + j) < numCols; j++) {
-            	int c = startCol + j;
+            for (int j = 0; j < hWord.length() && (colForStem + j) < numCols; j++) {
+            	int currentCol = startCol + j;
             	
-                    grid[row][c] = word.charAt(j);
+          
          
+                    
+                    if (currentCol >= 0 && currentCol < numCols) {
+                        char existingChar = grid[row][currentCol];
+                        char newChar = hWord.charAt(j);
+
+                        if (existingChar == '.' || existingChar == newChar) {
+                            grid[row][currentCol] = newChar;
+                        } else {
+                            // Handle conflicts (overlapping letters must match)
+                            System.err.println("Conflict detected at row " + row + ", col " + currentCol + ". Existing: '" + existingChar + "', New: '" + newChar + "'.");
+                            // Decide how to handle: skip, overwrite, or adjust
+                            // For simplicity, we'll skip placing this word
+                            grid[row][currentCol] = existingChar; // Keep existing
+                        }
+                    }
               
             }
         }
@@ -589,7 +608,7 @@ public class GameServer {
 					            int searchFrom = 0;
 					            
 					            
-					            int colForStem = 9;  // Make sure this matches your constructPuzzle setting.
+					            int colForStem = 10;  // Make sure this matches the constructPuzzle setting.
 					            StringBuilder verticalStemBuilder = new StringBuilder();
 					            int numRows = puzzle.length;
 					            for (int row = 0; row < numRows; row++) {
