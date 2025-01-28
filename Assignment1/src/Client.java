@@ -45,45 +45,12 @@ public class Client {
 			
 			String message, response;
 			
-			System.out.println("---------Welcome to the Game Server---------");
-			System.out.println("Please create an account or login to continue:");
-	        System.out.println("Commands: CREATE [username] [password], LOGIN [username] [password]");
+		
 	        
 	        
 	        
-	        
-	        String[] tokens = userEntry.nextLine().split("\\s+");
-            if (tokens.length == 0) {
-                System.out.println("Invalid command.");
-            }
 
-            String command = tokens[0].toUpperCase();
-
-            if (command.equals("CREATE") || command.equals("LOGIN")) {
-                // Forward the command to AccountServer
-//                accountOut.println(input.nextLine());
-
-                // Read response from AccountServer
-//                if (accountIn.hasNextLine()) {
-//                    String acctResponse  = accountIn.nextLine();
-//                    System.out.println("Account Server: " + acctResponse);
-//
-//                    if (acctResponse.startsWith("SUCCESS:")) {
-//                        if (command.equals("CREATE")) {
-//                            // After successful creation, prompt user to login
-//                            System.out.println("Account created successfully. Please login to continue: ");
-//                        } else if (command.equals("LOGIN")) {
-//                            authenticated = true;
-//                            username = tokens[1];
-//                            System.out.println("You are now authenticated. Starting the game...");
-//                            }
-//                    }
-//                }
-            } else {
-                System.out.println("Please create an account or login first.");
-            }
-     
-
+           System.out.println("Press Enter to start: ");
 			
 			do {
 				message = userEntry.nextLine();

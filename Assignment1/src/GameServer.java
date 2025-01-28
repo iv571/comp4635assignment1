@@ -21,7 +21,7 @@ import java.io.*;
 
 public class GameServer {
 	private static final String USAGE = "Usage: java GameServer [port]";
-	private volatile boolean isRunning = true;
+	private static volatile boolean isRunning = true;
 	private int count = 0;
 	
 	public static void main(String[] args) throws IOException {
@@ -75,7 +75,7 @@ public class GameServer {
 	        accountServerThread.start();
 			
 			ExecutorService fixedThreadPool = Executors.newFixedThreadPool(20);
-			while (true) {
+			while (isRunning) {
 				fixedThreadPool.execute(new ReverseEchoClientHandler(server.accept()));
 			}
 			
@@ -271,14 +271,29 @@ public class GameServer {
         }
         return sb.toString();
     }
+    
+    private static void shutdownServer() {
+        isRunning = false;
+    }
 
 
 	
 	private static class ReverseEchoClientHandler implements Runnable {
 		private Socket clientSocket;
+		private AccountClient accountClient;
 
 		ReverseEchoClientHandler(Socket socket) {
 			this.clientSocket = socket;
+			
+			try {
+	            // Initialize AccountClient with appropriate parameters
+	           
+	            this.accountClient = new AccountClient("localhost", 5700);
+	        } catch (Exception e) {
+	            System.err.println("Failed to initialize AccountClient: " + e.getMessage());
+	            e.printStackTrace();
+	            // Optionally, you might want to close the clientSocket here or handle the error appropriately
+	        }
 		}
 
 		@Override
@@ -290,22 +305,90 @@ public class GameServer {
 			try {
 				PrintStream out = new PrintStream(clientSocket.getOutputStream());
 				
-				
-				
-				
 				Scanner in = new Scanner(new InputStreamReader(clientSocket.getInputStream()));
 				
-				
-				
+				boolean authenticated = false;
+				String username = null;
 
 				// Read the request, reverse it, and echo it back
 
 				while (in.hasNextLine()) {
 					String inputLine = in.nextLine();
 					System.out.println("Received the following message from" + clientSocket + ":" + inputLine);
+//					BufferedReader inB = new BufferedReader(new InputStreamReader(clientSocket.getInputStream()));
 					
 					
-					
+					while (!authenticated) {
+						out.println("---------Welcome to the Game Server---------");
+						out.println("Please create an account or login to continue:");
+					    out.println("Commands: CREATE [username] [password], LOGIN [username] [password]");
+					    out.println();
+					    
+					    String inLine = in.nextLine().trim();
+					    
+					    
+					    String[] tokens = inLine.split("\\s+");
+					    System.out.println(inLine);
+					    
+					    if (tokens.length == 0) {
+			                System.out.println("Invalid command.");
+			            }
+					    
+					    String command = tokens[0].toUpperCase();
+
+			            if (command.equals("CREATE") || command.equals("LOGIN")) {
+			            	if (tokens.length != 3) {
+		                        out.println("ERROR: " + command + " requires a username and password.");
+		                        continue;
+		                    }
+			            	
+			            	String user = tokens[1];
+		                    String pass = tokens[2];
+		                    
+		                    String accountCommand = command + " " + user + " " + pass;
+		                    
+		                    String response;
+
+	                        try {
+	                            response = accountClient.sendCommand(accountCommand);
+	                        } catch (IOException e) {
+	                            out.println("ERROR: Unable to communicate with Account Server.");
+	                            System.err.println("AccountServer communication error: " + e.getMessage());
+	                            continue;
+	                        }
+
+	                        if (response == null) {
+	                            out.println("ERROR: No response from Account Server.");
+	                            continue;
+	                        }
+
+	                        if (response.startsWith("ERROR")) {
+	                            out.println(response);
+	                        } else {
+	                            out.println(response);
+	                            if (command.equals("LOGIN") && response.equalsIgnoreCase("Login successful.")) {
+	                                authenticated = true;
+	                                username = user;
+	                                out.println("You are now logged in as " + username + ".");
+	                                continue;
+	                            } else if (command.equals("CREATE") && response.equalsIgnoreCase("Account created successfully.")) {
+	                                out.println("You can now log in with your credentials.");
+	                                continue;
+	                            }
+	                        }
+	                        
+	                        
+	                    out.println(); // Add an empty line for readability
+		                    
+		                    
+			            } else {
+			                out.println("Please create an account or login first.");
+			                out.println();
+			            }
+			     
+
+					    
+					}
 					
 					
 					if (inputLine.matches("start\\s+\\d+\\s+\\d+")) {
@@ -369,6 +452,26 @@ public class GameServer {
 				        		
 				        	 if (!formattedPuzzle.contains("_")) {
 						            out.println("Congratulations! You have completed the puzzle.");
+						            
+						            String updateScoreCommand = "UPDATE_SCORE " + username + " 1";
+					                String response;
+					                try {
+					                    response = accountClient.sendCommand(updateScoreCommand);
+					                } catch (IOException e) {
+					                    out.println("ERROR: Unable to update score.");
+					                    System.err.println("Failed to update score for user " + username + ": " + e.getMessage());
+					                    out.println();
+					                    return;
+					                }
+
+					                if (response != null && response.equalsIgnoreCase("Score updated successfully.")) {
+					                    out.println("Your score has been increased by 1.");
+					                } else if (response != null && response.startsWith("ERROR")) {
+					                    out.println(response);
+					                } else {
+					                    out.println("Unexpected response from Account Server.");
+					                }
+						            
 						            out.println("Press enter: ");
 					            	out.println();
 					            	gameOn = false;
@@ -379,6 +482,27 @@ public class GameServer {
 						            out.println("Game over! You have used all your attempts.");
 						            out.println("The solution was:");
 						            out.println(revealedPuzzle);
+						            out.println("Press Enter: ");
+						            
+						            String updateScoreCommand = "UPDATE_SCORE " + username + " -1";
+					                String response;
+					                try {
+					                    response = accountClient.sendCommand(updateScoreCommand);
+					                } catch (IOException e) {
+					                    out.println("ERROR: Unable to update score.");
+					                    System.err.println("Failed to update score for user " + username + ": " + e.getMessage());
+					                    out.println();
+					                    return;
+					                }
+
+					                if (response != null && response.equalsIgnoreCase("Score updated successfully.")) {
+					                    out.println("Your score has been decreased by 1.");
+					                } else if (response != null && response.startsWith("ERROR")) {
+					                    out.println(response);
+					                } else {
+					                    out.println("Unexpected response from Account Server.");
+					                }
+						            
 						            gameOn = false;
 						            continue;
 						        }
@@ -399,6 +523,16 @@ public class GameServer {
 							
 							if (guessedLetter == '$') {
 				            	out.println("Displaying score: ");
+				            	String accountCommand = "GET_SCORE " + username;
+				                String response;
+
+				                try {
+				                    response = accountClient.sendCommand(accountCommand);
+				                } catch (IOException e) {
+				                    out.println("ERROR: Unable to communicate with Account Server.");
+				                    System.err.println("AccountServer communication error: " + e.getMessage());
+				                    continue;
+				                }
 				            	continue;
 				            } else if (guessedLetter == '!') {
 				            	out.println("Starting new game ...");
@@ -408,7 +542,7 @@ public class GameServer {
 				            	continue;
 				            } else if (guessedLetter == '#') {
 				            	out.println("Ending the game ...");
-				            	out.println("Game Over");
+				            	shutdownServer();
 				            	break;
 				            
 				            }
@@ -558,6 +692,32 @@ public class GameServer {
 					    // e.g. "check score"
 					    // handle check score command
 						out.print("checking score...");
+						
+						String accountCommand = "GET_SCORE " + username;
+		                String response;
+
+		                try {
+		                    response = accountClient.sendCommand(accountCommand);
+		                } catch (IOException e) {
+		                    out.println("ERROR: Unable to communicate with Account Server.");
+		                    System.err.println("AccountServer communication error: " + e.getMessage());
+		                    continue;
+		                }
+
+		                if (response == null) {
+		                    out.println("ERROR: No response from Account Server.");
+		                    continue;
+		                }
+
+		                if (response.startsWith("ERROR")) {
+		                    out.println(response);
+		                } else {
+		                    out.println("Your score: " + response);
+		                }
+
+		                out.println(); // Add an empty line for readability
+		                continue; // Continue to the next command
+		        
 					    
 					} else if (inputLine.matches("check\\s+\\S+")) {
 					    // e.g. "check apple"
@@ -583,6 +743,10 @@ public class GameServer {
 							out.println("Word not in word repository");
 							out.println();
 						}
+					} else if (inputLine.matches("exit")) {
+						shutdownServer();
+						out.println("Shutting down the server...");
+		            	break;
 					}
 					else {
 						out.print("Connected to the game server \n");
@@ -594,7 +758,7 @@ public class GameServer {
 						out.print("remove [word] \n");
 						out.print("check [word] \n");
 						out.print("check score \n");
-						
+						out.print("exit \n");
 				
 						out.println();
 					}
