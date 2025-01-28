@@ -60,6 +60,19 @@ public class GameServer {
 			
 			udpServerThread.start();
 			
+			// Start AccountServer in a new thread
+	        Thread accountServerThread = new Thread(() -> {
+	            try {
+	                AccountServer accountServer = new AccountServer(5700);
+	                Runtime.getRuntime().addShutdownHook(new Thread(() -> accountServer.stopServer()));
+	                accountServer.startServer();
+	            } catch (IOException e) {
+	                System.err.println("Failed to start Account Server: " + e.getMessage());
+	                e.printStackTrace();
+	            }
+	        });
+
+	        accountServerThread.start();
 			
 			ExecutorService fixedThreadPool = Executors.newFixedThreadPool(20);
 			while (true) {
@@ -77,13 +90,7 @@ public class GameServer {
 			e.printStackTrace();
 		}
 		
-		
-      
-            
-            
-      
-
-       // Start the UDP server thread
+	
 	}
 	
 	private static String getRandomWordFromFile(int minLength) {
@@ -148,7 +155,7 @@ public class GameServer {
         }
 
         // Place the vertical stem in a fixed column (e.g., column 4).
-        int colForStem = 4;
+        int colForStem = 9;
         for (int row = 0; row < verticalStem.length(); row++) {
             grid[row][colForStem] = verticalStem.charAt(row);
         }
@@ -448,7 +455,7 @@ public class GameServer {
 					            int searchFrom = 0;
 					            
 					            
-					            int colForStem = 4;  // Make sure this matches your constructPuzzle setting.
+					            int colForStem = 9;  // Make sure this matches your constructPuzzle setting.
 					            StringBuilder verticalStemBuilder = new StringBuilder();
 					            int numRows = puzzle.length;
 					            for (int row = 0; row < numRows; row++) {

@@ -14,7 +14,7 @@ public class AccountServer {
 
     public static void main(String[] args) {
         try {
-            int port = (args.length > 0) ? Integer.parseInt(args[0]) : 5599;
+            int port = (args.length > 0) ? Integer.parseInt(args[0]) : 5700;
             AccountServer server = new AccountServer(port);
             Runtime.getRuntime().addShutdownHook(new Thread(() -> server.stopServer()));
             server.startServer();
