@@ -1,10 +1,23 @@
 /**
  * Title: COMP4635 Assignment 1 Game Server
+ * 
+ * The {@code GameServer} class serves as the main server application for a multiplayer crossword puzzle game.
+ * It handles client connections, manages game sessions, interacts with auxiliary services such as account management
+ * and word services, and orchestrates the game logic.
+ * 
+ * Key Responsibilities:
+ * Networking: Listens for incoming client connections on a specified port using TCP and UDP.
+ * Concurrency: Utilizes a thread pool to handle multiple client connections simultaneously.
+ * Game Management: Constructs crossword puzzles, processes client guesses, and manages game state.
+ * Account Management: Facilitates user authentication and score tracking by communicating with an AccountServer.
+ * Word Management: Interacts with a Word_UDP_Server to manage the word repository for the game.
+ * 
+ * @author Iyan Velji
+ * 
  * Usage: java MultithreadReverseEchoServer [port] 
  */
 
 
-import java.io.IOException;
 import java.net.ServerSocket;
 import java.util.concurrent.Executors;
 import java.net.*;
@@ -20,10 +33,24 @@ import java.io.*;
 
 
 public class GameServer {
+	/**
+     * The usage message displayed when incorrect arguments are provided.
+     */
 	private static final String USAGE = "Usage: java GameServer [port]";
+	/**
+     * A flag indicating whether the server is running. It's declared volatile to ensure visibility across threads.
+     */
 	private static volatile boolean isRunning = true;
-	private int count = 0;
 	
+	 /**
+     * The entry point of the GameServer application.
+     *
+     * It validates command-line arguments, initializes the TCP server socket, starts auxiliary servers (Word UDP Server and Account Server),
+     * and sets up a thread pool to handle incoming client connections.
+     *
+     * @param args Command-line arguments. Expects exactly one argument specifying the port number.
+     * @throws IOException If an I/O error occurs when opening the socket.
+     */
 	public static void main(String[] args) throws IOException {
 		if (args.length != 1) {
 			System.err.println(USAGE);
@@ -93,6 +120,12 @@ public class GameServer {
 	
 	}
 	
+	/**
+     * Retrieves a random word from the "words.txt" file that meets or exceeds the specified minimum length.
+     *
+     * @param minLength The minimum length of the word to retrieve.
+     * @return A randomly selected word as a {@code String}. Returns an empty string if no suitable word is found.
+     */
 	private static String getRandomWordFromFile(int minLength) {
 		List<String> words = new ArrayList<>();
         try (BufferedReader br = new BufferedReader(new FileReader("words.txt"))) {
@@ -115,6 +148,14 @@ public class GameServer {
         return words.get(rand.nextInt(words.size()));
 	  }
 	
+	/**
+     * Retrieves a random word from "words.txt" that contains a specific constraint character and meets the minimum length requirement.
+     * If no such word exists, it falls back to retrieving any random word that meets the minimum length.
+     *
+     * @param constraint The character that the word must contain.
+     * @param minLength  The minimum length of the word.
+     * @return A randomly selected word that meets the constraints. Returns an empty string if no suitable word is found.
+     */
 	private static String getConstrainedRandomWord(char constraint, int minLength) {
 		List<String> words = new ArrayList<>();
 	    try (BufferedReader br = new BufferedReader(new FileReader("words.txt"))) {
@@ -141,6 +182,13 @@ public class GameServer {
       
     }
 	
+	/**
+     * Constructs a crossword puzzle grid by placing a vertical stem and corresponding horizontal words.
+     *
+     * @param verticalStem   The central vertical word in the puzzle.
+     * @param horizontalWords An array of horizontal words to be placed intersecting the vertical stem.
+     * @return A 2D character array representing the crossword puzzle grid.
+     */
 	private static char[][] constructPuzzle(String verticalStem, String[] horizontalWords) {
         // Determine puzzle dimensions.
         int numRows = verticalStem.length();
@@ -297,6 +345,10 @@ public class GameServer {
 
 
 	
+    /**
+     * The {@code ReverseEchoClientHandler} class is responsible for handling individual client connections.
+     * It manages user authentication, processes game commands, and maintains the game state for each client.
+     */
 	private static class ReverseEchoClientHandler implements Runnable {
 		private Socket clientSocket;
 		private AccountClient accountClient;
@@ -314,7 +366,14 @@ public class GameServer {
 	            // Optionally, you might want to close the clientSocket here or handle the error appropriately
 	        }
 		}
-
+		
+		 /**
+         * Runs the client handler thread, managing the interaction between the server and the connected client.
+         *
+         * 
+         * This includes handling authentication, processing various game commands, and managing the game loop.
+         *
+         */
 		@Override
 		public void run() {
 			System.out.println("Connected, handling new client: " + clientSocket);
@@ -336,13 +395,10 @@ public class GameServer {
 					System.out.println("Received the following message from" + clientSocket + ":" + inputLine);
 //					BufferedReader inB = new BufferedReader(new InputStreamReader(clientSocket.getInputStream()));
 					
-					
+					// Authentication Loop
 					while (!authenticated) {
-						out.println("---------Welcome to the Game Server---------");
-						out.println("Please create an account or login to continue:");
-					    out.println("Commands: CREATE [username] [password], LOGIN [username] [password]");
-					    out.println();
-					    
+						displayAuthenticationMenu(out);
+						
 					    String inLine = in.nextLine().trim();
 					    
 					    
@@ -601,7 +657,6 @@ public class GameServer {
 				        
 					} else if (inputLine.matches("add\\s+\\S+")) {
 						out.println("Adding word ...");
-				
 						
 						 // Split the input line by whitespace to extract the command and the word
 					    String[] parts = inputLine.split("\\s+");
@@ -610,17 +665,8 @@ public class GameServer {
 					    
 					        String word = parts[1]; // Extract the word to add
 					        int word_len = word.length(); // Calculate the length of the word
-					    
-						
-						String [] wordServiceRequest = Request_UDP_Game_2_Word.send_request(1, word, word_len, 0);
-						
-						if (wordServiceRequest[0].equals("T")) {
-							out.println("Word added");
-							out.println();
-						} else {
-							out.println("Word not added");
-							out.println();
-						}
+					        
+					      addWord(word, word_len, out);
 						
 					} else if (inputLine.matches("remove\\s+\\S+")) {
 					    // e.g. "remove apple"
@@ -636,32 +682,12 @@ public class GameServer {
 					        String word = parts[1]; // Extract the word to add
 					        int word_len = word.length(); // Calculate the length of the word
 					    
-						
-						String [] wordServiceRequest = Request_UDP_Game_2_Word.send_request(2, word, word_len, 0);
-						
-						if (wordServiceRequest[0].equals("T")) {
-							out.println("Word removed");
-							out.println();
-						} else {
-							out.println("Word not removed");
-							out.println();
-						}
+					        removeWord(word, word_len, out);
 					    
 					} else if (inputLine.matches("check\\s+score")) {
 					    // e.g. "check score"
 					    // handle check score command
-						out.print("checking score...");
-						
-						String accountCommand = "GET_SCORE " + username;
-		                String response;
-
-		                try {
-		                    response = accountClient.sendCommand(accountCommand);
-		                } catch (IOException e) {
-		                    out.println("ERROR: Unable to communicate with Account Server.");
-		                    System.err.println("AccountServer communication error: " + e.getMessage());
-		                    continue;
-		                }
+						String response = displayScore(username);
 
 		                if (response == null) {
 		                    out.println("ERROR: No response from Account Server.");
@@ -691,35 +717,15 @@ public class GameServer {
 					    
 					        String word = parts[1]; // Extract the word to add
 					        int word_len = word.length(); // Calculate the length of the word
-					    
+					        checkWord(word, word_len, out);
 						
-						String [] wordServiceRequest = Request_UDP_Game_2_Word.send_request(3, word, word_len, 0);
-						
-						if (wordServiceRequest[0].equals("T")) {
-							out.println("Word in word repository");
-							out.println();
-						} else {
-							out.println("Word not in word repository");
-							out.println();
-						}
 					} else if (inputLine.matches("exit")) {
 						shutdownServer();
 						out.println("Shutting down the server...");
 		            	break;
 					}
 					else {
-						out.print("Connected to the game server \n");
-				
-						out.print("---------CRISS CROSS WORD PUZZLE---------\n");
-			
-						out.print("start [level] [failed attempts factor] \n");
-						out.print("add [word] \n");
-						out.print("remove [word] \n");
-						out.print("check [word] \n");
-						out.print("check score \n");
-						out.print("exit \n");
-				
-						out.println();
+						 displayHelpMenu(out);
 					}
 					
 				}
@@ -736,6 +742,98 @@ public class GameServer {
 			}
 		}
 		
+		
+		/**
+		 * Checks whether a given word exists in the word repository by communicating with the {@code Word_UDP_Game_2_Word} service.
+		 *
+		 * 
+		 * This method sends a request to the word service to verify the existence of the specified word.
+		 * Based on the response from the service, it informs the client whether the word is present
+		 * in the repository.
+		 * 
+		 *
+		 * @param word     The word to be checked in the word repository.
+		 * @param word_len The length of the word being checked.
+		 * @param out      The {@code PrintStream} used to send output messages to the client.
+		 */
+		 private void checkWord(String word, int word_len, PrintStream out) {
+			 String [] wordServiceRequest = Request_UDP_Game_2_Word.send_request(3, word, word_len, 0);
+				
+				if (wordServiceRequest[0].equals("T")) {
+					out.println("Word in word repository");
+					out.println();
+				} else {
+					out.println("Word not in word repository");
+					out.println();
+				}
+			
+		}
+
+		 /**
+		  * Removes a specified word from the word repository by communicating with the {@code Word_UDP_Game_2_Word} service.
+		  *
+		  * 
+		  * This method sends a request to the word service to delete the specified word from the repository.
+		  * Based on the response from the service, it informs the client whether the removal was successful.
+		  *
+		  *
+		  * @param word     The word to be removed from the word repository.
+		  * @param word_len The length of the word being removed.
+		  * @param out      The {@code PrintStream} used to send output messages to the client.
+		  */ 
+		private void removeWord(String word, int word_len, PrintStream out) {
+			// TODO Auto-generated method stub
+			 String [] wordServiceRequest = Request_UDP_Game_2_Word.send_request(2, word, word_len, 0);
+				
+				if (wordServiceRequest[0].equals("T")) {
+					out.println("Word removed");
+					out.println();
+				} else {
+					out.println("Word not removed");
+					out.println();
+				}
+			
+		}
+
+		/**
+		 * Adds a new word to the word repository by communicating with the {@code Word_UDP_Game_2_Word} service.
+		 *
+		 * <p>
+		 * This method sends a request to the word service to insert the specified word into the repository.
+		 * Based on the response from the service, it informs the client whether the addition was successful.
+		 * </p>
+		 *
+		 * @param word     The word to be added to the word repository.
+		 * @param word_len The length of the word being added.
+		 * @param out      The {@code PrintStream} used to send output messages to the client.
+		 */
+		private void addWord(String word, int word_len, PrintStream out) {
+			 String [] wordServiceRequest = Request_UDP_Game_2_Word.send_request(1, word, word_len, 0);
+				
+				if (wordServiceRequest[0].equals("T")) {
+					out.println("Word added");
+					out.println();
+				} else {
+					out.println("Word not added");
+					out.println();
+				}
+			
+		}
+
+		/**
+         * Displays the authentication menu with available commands to the client.
+         *
+         * @param out The PrintStream to send output to the client.
+         */
+		private void displayAuthenticationMenu(PrintStream out) {
+			// TODO Auto-generated method stub
+			out.println("---------Welcome to the Game Server---------");
+			out.println("Please create an account or login to continue:");
+		    out.println("Commands: CREATE [username] [password], LOGIN [username] [password]");
+		    out.println();
+		    
+		}
+
 		/**
 		 * Processes the client's guess and updates the game state accordingly.
 		 *
@@ -771,6 +869,14 @@ public class GameServer {
                
             }
 		}
+		
+		
+		 /**
+         * Decreases the user's score by 1 by communicating with the {@code AccountServer}.
+         *
+         * @param username The username of the client.
+         * @return A message indicating the result of the operation.
+         */
 		private String decreaseScore(String username) {
 			String updateScoreCommand = "UPDATE_SCORE " + username + " -1";
             String response;
@@ -792,6 +898,29 @@ public class GameServer {
 		}
 		
 		
+	    /**
+         * Displays the help menu with available commands to the client.
+         *
+         * @param out The PrintStream to send output to the client.
+         */
+        private void displayHelpMenu(PrintStream out) {
+            out.print("Connected to the game server \n");
+            out.print("---------CRISS CROSS WORD PUZZLE---------\n");
+            out.print("start [level] [failed attempts factor] \n");
+            out.print("add [word] \n");
+            out.print("remove [word] \n");
+            out.print("check [word] \n");
+            out.print("check score \n");
+            out.print("exit \n");
+            out.println();
+        }
+		
+   	 	/**
+         * Increases the user's score by 1 by communicating with the {@code AccountServer}.
+         *
+         * @param username The username of the client.
+         * @return A message indicating the result of the operation.
+         */
 		private String increaseScore(String username) {
 			String updateScoreCommand = "UPDATE_SCORE " + username + " 1";
             String response;
@@ -812,7 +941,13 @@ public class GameServer {
                 return "Unexpected response from Account Server.";
             }
 		}
-//		
+	
+		/**
+         * Displays the user's current score by communicating with the {@code AccountServer}.
+         *
+         * @param username The username of the client.
+         * @return The user's score as a {@code String}.
+         */
 		private String displayScore(String username) {
 			String accountCommand = "GET_SCORE " + username;
             String response = "";
