@@ -1,3 +1,24 @@
+/**
+ * The {@code Account} class represents a user account with a username, password, 
+ * and a history of scores. It implements {@code Serializable} to allow persistent 
+ * storage of account data.
+ * 
+ * Each account has:
+ * - A unique username.
+ * - A password (which should be stored securely).
+ * - A list of integer scores associated with the account.
+ * 
+ * The class provides methods to:
+ * - Retrieve the username and password.
+ * - Access the list of scores.
+ * - Add new scores to the history.
+ * 
+ * Serialization ensures that account data can be saved and loaded from a file,
+ * allowing for persistent storage across server restarts.
+ * 
+ * @author Khanh Le
+ */
+
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;

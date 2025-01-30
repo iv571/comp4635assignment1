@@ -1,3 +1,27 @@
+/**
+ * The ClientHandler class is responsible for handling individual client connections
+ * to the AccountServer. It processes incoming commands related to account management 
+ * and score tracking.
+ * 
+ * Responsibilities:
+ * - Reads commands from the client through a socket connection.
+ * - Executes account-related operations such as creating accounts, logging in, 
+ *   updating scores, and retrieving historical scores.
+ * - Manages client-server communication using input and output streams.
+ * - Ensures thread safety while accessing the shared account data.
+ * 
+ * Supported Commands:
+ * - CREATE <username> <password>  -> Creates a new account.
+ * - LOGIN <username> <password>   -> Authenticates a user.
+ * - UPDATE_SCORE <username> <score> -> Adds a score to a user's history.
+ * - GET_SCORE <username> -> Retrieves a user's historical scores.
+ * 
+ * This class runs as a separate thread for each client connection, allowing 
+ * concurrent client interactions with the server.
+ * 
+ * @author Khanh Le
+ */
+
 import java.io.*;
 import java.net.*;
 import java.util.Map;

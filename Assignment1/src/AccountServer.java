@@ -1,3 +1,23 @@
+/**
+ * The AccountServer class is a multi-threaded server that manages user accounts 
+ * over a network using sockets. It listens for client connections, handles 
+ * account creation, authentication, and score updates, and processes requests 
+ * concurrently.
+ *
+ * Features:
+ * - Listens on a specified port (default: 5700).
+ * - Manages accounts using a concurrent hash map.
+ * - Handles multiple clients via threads.
+ * - Supports graceful shutdown.
+ *
+ * Usage:
+ *   java AccountServer [port]
+ *
+ * Dependencies:
+ * - Requires Account and ClientHandler classes.
+ * @author Khanh Le
+ */
+
 import java.io.*;
 import java.net.*;
 import java.util.concurrent.ConcurrentHashMap;

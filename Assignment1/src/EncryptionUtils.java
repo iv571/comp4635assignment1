@@ -1,3 +1,17 @@
+/**
+ * EncryptionUtils provides AES encryption and decryption for secure data handling.
+ * 
+ * Features:
+ * - Encrypts plaintext into a Base64-encoded string.
+ * - Decrypts an encrypted string back to plaintext.
+ * 
+ * Note:
+ * - The secret key is hardcoded for demonstration; use a secure key management system in production.
+ * - AES requires a 16, 24, or 32-byte key.
+ * 
+ * @author Khanh Le
+ */
+
 import javax.crypto.Cipher;
 import javax.crypto.SecretKey;
 import javax.crypto.spec.SecretKeySpec;
