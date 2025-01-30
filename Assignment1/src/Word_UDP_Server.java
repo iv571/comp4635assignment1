@@ -8,12 +8,22 @@ import java.net.DatagramSocket;
 import java.net.InetAddress;
 import java.net.SocketException;
 import java.util.List;
-
+/**
+ * Word_UDP_Server
+ * 
+ * List<String> game_map: map for the game. index 0: contain the verticle word 
+ *  					  the rest horizontal words
+ *  
+ *  GENERATE_MAP, ADD_WORD, REMOVE_WORD, CHECK_WORD:
+ *  each command represent a int. the packet must contain a int 
+ *  number. base on the number to do the right request.
+ *  Eg: when read 0, the request is GENERATE_MAP so on and so for
+ */
 public class Word_UDP_Server implements Runnable {
 
 	private List<String> game_map = null;
 	
-	private static final int GENERATE_MAP = 0;
+	private static final int GENERATE_MAP = 0; 
 
 	private static final int ADD_WORD = 1;
 	
@@ -30,12 +40,19 @@ public class Word_UDP_Server implements Runnable {
 		socket = new DatagramSocket(port);
 	}
 	
+	/**
+	 * Method: main
+	 * @param args the server has to be run with input args to indicated which port
+	 * to bind
+	 * @throws IOException
+	 * @ author Stanley
+	 */
 	public static void main(String[] args) throws IOException {
 		
       
 		Word_UDP_Server server = check_connection_validity(args);
 		
-		new Word ("words.txt");
+		new Word ("words.txt"); // activate word class to generate a word list from words.txt
 		
 		server.serve();
 		
@@ -43,6 +60,15 @@ public class Word_UDP_Server implements Runnable {
     
 	}
 	
+	/**
+	 * Method: check_connection_validity
+	 * check if there is port input when running the server
+	 * also check if the port bind
+	 * 
+	 * @param args
+	 * @return return a Word_UDP_Server if the connection is valid
+	 * @ author Stanley
+	 */
 	private static Word_UDP_Server check_connection_validity(String[] args) {
 		
 		int port = 0;
@@ -51,7 +77,7 @@ public class Word_UDP_Server implements Runnable {
 				
 		if (args.length != 1) {
 	        
-        	System.err.println("Usage: java BasicUDPTimeServer [port]");
+        	System.err.println("Usage: java Word_UDP_Server [port]");
            
         	System.exit(1);
         }
@@ -79,6 +105,14 @@ public class Word_UDP_Server implements Runnable {
 		return server;
 		
 	}
+	/**
+	 * Method: read_receive_request
+	 * 
+	 * receive a packet and extract it to data Stream type then return it
+	 * @return  data Stream with info
+	 * @throws IOException
+	 * @ author Stanley
+	 */
 	private DataInputStream read_receive_request () throws IOException {
 		
 		
@@ -99,6 +133,33 @@ public class Word_UDP_Server implements Runnable {
 	}
 	
 	@SuppressWarnings("unchecked")
+	/**
+	 * Method: process_request
+	 * 
+	 * read a int from the data stream into request
+	 * 
+	 * then base on the request read on the data Stream
+	 * 
+	 * if request if GENERATE_MAP it follow another int which indicate the len 
+	 * of a word for game map
+	 * 
+	 * if other it follows with a int that indicate the size of the string in the
+	 * packet and base on the size to read the string
+	 * 
+	 * then base on the request calling the corresponding method to operated the 
+	 * request
+	 * 
+	 * when doing any operation on the request, these have to be lock to avoid 
+	 * race condition
+	 * 
+	 * 
+	 * @param dataStream the info from receive packet
+	 * @return if requesting a game map return -1
+	 * 			else if the other request successfully completed return 1
+	 * 			else return 0
+	 * @throws IOException
+	 * @ author Stanley
+	 */
 	private int process_request (DataInputStream dataStream) throws IOException{
 		
 		System.out.println("processing request");
@@ -155,7 +216,18 @@ public class Word_UDP_Server implements Runnable {
 	
 		return (boolean) result ? 1 : 0;
 	}
-	
+	/**
+	 * Method: produce_out_stream_data
+	 * prepare a out stream data to send back 
+	 * depend on the request calling the corresponding method to pack the out stram data
+	 * 
+	 * if result = -1 only a int will be send to inform if the request successfully completed
+	 * 
+	 * @param result result of the request
+	 * @return byte array with out put data
+	 * @throws IOException
+	 * @ author Stanley
+	 */
 	private byte[] produce_out_stream_data (int result) throws IOException {
 		
 		byte[] respond_buf = null;
@@ -180,6 +252,17 @@ public class Word_UDP_Server implements Runnable {
 	
 	}
 	
+	/**
+	 * Method: packed_word_stem
+	 * this is called when request if generating a map
+	 * pack the words in to data stream. in order of int , string .....
+	 * int indicated the size of the string
+	 * 
+	 * @param byteStream_out
+	 * @return datastream with packed info
+	 * @throws IOException
+	 * @ author Stanley
+	 */
 	private DataOutputStream packed_word_stem(ByteArrayOutputStream byteStream_out) throws IOException {
 
 		DataOutputStream dataStream_out = new DataOutputStream(byteStream_out);
@@ -196,7 +279,15 @@ public class Word_UDP_Server implements Runnable {
 		return dataStream_out;
 		
 	}
-
+/**
+ * Method: send_result
+ * 
+ * send back the result of the request.
+ * 
+ * @param respond_buf
+ * @throws IOException
+ * @ author Stanley
+ */
 	private void send_result (byte[] respond_buf) throws IOException {
 		
         int port = udp_receive_packet.getPort();
@@ -214,6 +305,17 @@ public class Word_UDP_Server implements Runnable {
         return;
 	}
 	
+	/**
+	 * a high level view to process_request 
+	 * first read_recives_request
+	 * then process_request
+	 * then produce_out_stream_data
+	 * last send back the result
+	 * 
+	 * 
+	 * Method: serve
+	 * @ author Stanley
+	 */
 	void serve() {
 		
 		while(true) {
@@ -230,8 +332,6 @@ public class Word_UDP_Server implements Runnable {
                 
                 send_result (respond_buf);
                 
-				System.out.println("Result has been sent!");
-
                 
 			} catch (SocketException e) {
 				
