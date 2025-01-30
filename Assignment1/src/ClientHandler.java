@@ -87,8 +87,6 @@ public class ClientHandler implements Runnable {
         }
         Account account = new Account(username, password);
         accounts.put(username, account);
-        // System.out.println("User Info: " + account.getUsername()
-        // + " " + account.getPassword());
         return "Account created successfully.";
     }
 
