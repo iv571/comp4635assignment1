@@ -349,6 +349,7 @@ public class GameServer {
 					    String[] tokens = inLine.split("\\s+");
 					    System.out.println(inLine);
 					    
+					    
 					    if (tokens.length == 0) {
 			                System.out.println("Invalid command.");
 			            }
@@ -412,36 +413,17 @@ public class GameServer {
 					
 					if (inputLine.matches("start\\s+\\d+\\s+\\d+")) {
 						
-						
 						String[] parts = inputLine.split("\\s+");
 						
 						int i = Integer.parseInt(parts[1]);
 					    int f = Integer.parseInt(parts[2]);
-					    
-					    
-					    
-					    
-					    //
 						
 						String verticalStem = getRandomWordFromFile(i - 1);
 						System.out.println("Vertical Stem: " + verticalStem);
 						String [] wordServiceRequest = Request_UDP_Game_2_Word.send_request(0, verticalStem, verticalStem.length(), 0);
 						String[] gameMapArray = Arrays.copyOfRange(wordServiceRequest, 1, i);
 						 List<String> gameMap = Arrays.asList(wordServiceRequest);
-					
-						System.out.println("Word Service Request: " + Arrays.toString(wordServiceRequest));
 						
-						
-						int numHorizontalWords = i - 1;
-				        String[] horizontalWords = new String[numHorizontalWords];
-				        for (int j = 0; j < numHorizontalWords; j++) {
-				            // Constraint: horizontal word starts with the corresponding letter of the vertical stem.
-				            char constraint = verticalStem.charAt(j);
-				            horizontalWords[j] = getConstrainedRandomWord(constraint, i - 1);
-				            System.out.println("Row " + j + " / constraint=" + constraint
-				                       + " => " + horizontalWords[j]);
-				            System.out.println("Horizontal word for letter '" + constraint + "': " + horizontalWords[j]);
-				        }
 				        
 				        char[][] puzzle = constructPuzzle(gameMap.get(0), gameMapArray);
 				        
@@ -449,7 +431,7 @@ public class GameServer {
 				        
 				        numPuzzleLetters += verticalStem.length();
 				        
-				        for (String word : horizontalWords) {
+				        for (String word : gameMapArray) {
 				            numPuzzleLetters += word.length();
 				        }
 				        
@@ -472,24 +454,9 @@ public class GameServer {
 				        	 if (!formattedPuzzle.contains("_")) {
 						            out.println("Congratulations! You have completed the puzzle.");
 						            
-						            String updateScoreCommand = "UPDATE_SCORE " + username + " 1";
-					                String response;
-					                try {
-					                    response = accountClient.sendCommand(updateScoreCommand);
-					                } catch (IOException e) {
-					                    out.println("ERROR: Unable to update score.");
-					                    System.err.println("Failed to update score for user " + username + ": " + e.getMessage());
-					                    out.println();
-					                    return;
-					                }
-
-					                if (response != null && response.equalsIgnoreCase("Score updated successfully.")) {
-					                    out.println("Your score has been increased by 1.");
-					                } else if (response != null && response.startsWith("ERROR")) {
-					                    out.println(response);
-					                } else {
-					                    out.println("Unexpected response from Account Server.");
-					                }
+						            String response = increaseScore(username);
+						            
+						            out.println(response);
 						            
 						            out.println("Press enter: ");
 					            	out.println();
@@ -500,27 +467,13 @@ public class GameServer {
 						        if (failAttempts <= 0) {
 						            out.println("Game over! You have used all your attempts.");
 						            out.println("The solution was:");
-						            out.println(revealedPuzzle);
 						            out.println("Press Enter: ");
+						            out.println(revealedPuzzle);
+						           
 						            
-						            String updateScoreCommand = "UPDATE_SCORE " + username + " -1";
-					                String response;
-					                try {
-					                    response = accountClient.sendCommand(updateScoreCommand);
-					                } catch (IOException e) {
-					                    out.println("ERROR: Unable to update score.");
-					                    System.err.println("Failed to update score for user " + username + ": " + e.getMessage());
-					                    out.println();
-					                    return;
-					                }
-
-					                if (response != null && response.equalsIgnoreCase("Score updated successfully.")) {
-					                    out.println("Your score has been decreased by 1.");
-					                } else if (response != null && response.startsWith("ERROR")) {
-					                    out.println(response);
-					                } else {
-					                    out.println("Unexpected response from Account Server.");
-					                }
+						            String response = decreaseScore(username);
+						            
+						            out.println(response);
 						            
 						            gameOn = false;
 						            continue;
@@ -542,16 +495,8 @@ public class GameServer {
 							
 							if (guessedLetter == '$') {
 				            	out.println("Displaying score: ");
-				            	String accountCommand = "GET_SCORE " + username;
-				                String response;
-
-				                try {
-				                    response = accountClient.sendCommand(accountCommand);
-				                } catch (IOException e) {
-				                    out.println("ERROR: Unable to communicate with Account Server.");
-				                    System.err.println("AccountServer communication error: " + e.getMessage());
-				                    continue;
-				                }
+				            	String response = displayScore(username);
+				            	out.println(response);
 				            	continue;
 				            } else if (guessedLetter == '!') {
 				            	out.println("Starting new game ...");
@@ -595,12 +540,7 @@ public class GameServer {
 					             
 					                
 					            }
-					            if (found) {
-					                out.println("Letter " + guessedLetter + " Correct");
-					            } else {
-					                out.println("Sorry, letter '" + guessedLetter + "' is not in the puzzle (or already revealed).");
-					                failAttempts = failAttempts - 1;
-					            }
+					           
 					        } else if (guess.length() > 1) {
 					        	String lowerRevealed = revealedPuzzle.toLowerCase();
 					            String lowerGuess = guess.toLowerCase();
@@ -794,6 +734,99 @@ public class GameServer {
 				}
 				System.out.println("Closed: " + clientSocket);
 			}
+		}
+		
+		/**
+		 * Processes the client's guess and updates the game state accordingly.
+		 *
+		 * @param guess          The client's guess.
+		 * @param out            PrintStream to send output to client.
+		 * @param formattedPuzzle The current state of the puzzle.
+		 * @param revealedPuzzle The complete puzzle solution.
+		 * @param failAttempts   The remaining fail attempts.
+		 * @return Updated failAttempts after processing the guess.
+		 */
+		private String processSingleLetterGuess(char guessedLetter, boolean found, String formattedPuzzle, String revealedPuzzle, int failAttempts) {
+			 // Loop over the solution grid (the "revealedPuzzle") to search for all instances.
+            for (int x = 0; x < revealedPuzzle.length(); x++) {
+               
+                	
+                    // If the cell contains the guessed letter and it hasn't already been revealed...
+                    if (revealedPuzzle.charAt(x) == guessedLetter && formattedPuzzle.charAt(x) == '_') {
+//                    	puzzle[i][j] = true;
+                        found = true;
+                        char [] formattedPuzzleChar = formattedPuzzle.toCharArray();
+                        formattedPuzzleChar[x] = guessedLetter;
+                        formattedPuzzle = String.valueOf(formattedPuzzleChar);
+                        System.out.println(guessedLetter + " found");
+                    }
+             
+                
+            }
+            if (found) {
+                return "Letter " + guessedLetter + " Correct";
+            } else {
+            	 failAttempts = failAttempts - 1;
+                return "Sorry, letter '" + guessedLetter + "' is not in the puzzle (or already revealed).";
+               
+            }
+		}
+		private String decreaseScore(String username) {
+			String updateScoreCommand = "UPDATE_SCORE " + username + " -1";
+            String response;
+            try {
+                response = accountClient.sendCommand(updateScoreCommand);
+            } catch (IOException e) {
+            	System.err.println("Failed to update score for user " + username + ": " + e.getMessage());
+                return "ERROR: Unable to update score.";
+            }
+
+            if (response != null && response.equalsIgnoreCase("Score updated successfully.")) {
+                return "Your score has been decreased by 1.";
+            } else if (response != null && response.startsWith("ERROR")) {
+                return response;
+            } else {
+                return "Unexpected response from Account Server.";
+            }
+            
+		}
+		
+		
+		private String increaseScore(String username) {
+			String updateScoreCommand = "UPDATE_SCORE " + username + " 1";
+            String response;
+            try {
+                response = accountClient.sendCommand(updateScoreCommand);
+            } catch (IOException e) {
+            	 System.err.println("Failed to update score for user " + username + ": " + e.getMessage());
+                return "ERROR: Unable to update score.";
+               
+               
+            }
+
+            if (response != null && response.equalsIgnoreCase("Score updated successfully.")) {
+                return "Your score has been increased by 1."; 
+            } else if (response != null && response.startsWith("ERROR")) {
+               return response;
+            } else {
+                return "Unexpected response from Account Server.";
+            }
+		}
+//		
+		private String displayScore(String username) {
+			String accountCommand = "GET_SCORE " + username;
+            String response = "";
+
+            try {
+                response = accountClient.sendCommand(accountCommand);
+            } catch (IOException e) {
+                System.out.println("ERROR: Unable to communicate with Account Server.");
+                System.err.println("AccountServer communication error: " + e.getMessage());
+            
+            }
+            
+            return response;
+        	
 		}
 	}
 
