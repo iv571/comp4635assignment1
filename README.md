@@ -29,3 +29,9 @@ Check a word using command check [word]
 Check score using command check score
 
 Exit the game using command exit
+
+
+Shortcuts after starting criss cross puzzle
+$ - display score
+! - Start new game
+# - End the game
