@@ -32,6 +32,11 @@ Exit the game using command exit
 
 
 Shortcuts after starting criss cross puzzle
+
 $ - display score
+
 ! - Start new game
+
 # - End the game
+
+
